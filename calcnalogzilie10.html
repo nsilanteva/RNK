@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчёт налога от сдачи жилья в 2026 году</title>
+    <style>
+        /* Стиль для подсветки лучшего результата */
+        .best-rate {
+            background-color: #d1e7dd !important; 
+            font-weight: bold; 
+        }
+
+        body {
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        h1 {
+            text-align: center; 
+            color: #333; 
+        }
+        .input-group {
+            margin-bottom: 15px; 
+        }
+        label {
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold;
+        }
+        input {
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box; 
+        }
+        button {
+            background: #28a745;  /* Зеленый цвет кнопки */
+            color: white; 
+            padding: 12px 24px; 
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px; 
+        }
+        table {
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #28a745;  /* Зеленый цвет заголовков */
+            color: white; 
+        }
+        tr:hover {
+            background-color: #f8f9fa; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Расчёт налога от сдачи жилья в 2026 году</h1>
+
+        <div class="input-group">
+            <label for="monthlyIncome">Доход за месяц (руб.):</label>
+            <input type="number" id="monthlyIncome" placeholder="Введите сумму" min="0">
+        </div>
+
+        <button onclick="calculateTaxes()">Рассчитать налоги</button>
+
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Режим налогообложения</th> 
+                    <th>Годовой доход</th> 
+                    <th>Сумма налога</th> 
+                    <th>Чистая прибыль</th> 
+                    <th>Статус</th> 
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        function calculateTaxes() {
+            const monthlyIncome = parseFloat(document.getElementById('monthlyIncome').value); 
+
+            if (isNaN(monthlyIncome) || monthlyIncome <= 0) { 
+                alert('Пожалуйста, введите корректную сумму месячного дохода');
+                return; 
+            }
+
+            const annualIncome = monthlyIncome * 12; 
+            const tbody = document.getElementById('resultsTable').querySelector('tbody'); 
+            tbody.innerHTML = '';
+
+            const results = []; 
+
+            // 1. НПД 4%
+            let npd4Tax = 0; 
+            let statusNPD4 = 'Подходит'; 
+            let displayIncome4 = annualIncome;
+            if (annualIncome <= 2400000) { 
+                npd4Tax = annualIncome * 0.04; 
+            } else {
+                npd4Tax = 2400000 * 0.04; // Налог только с лимита
+                statusNPD4 = 'Превышен лимит 2,4 млн. руб.'; // Новый статус
+                displayIncome4 = 2400000; // Ограничение отображаемого дохода
+            }
+            results.push({ name: 'НПД (4%, физлица)', income: displayIncome4, tax: npd4Tax, profit: displayIncome4 - npd4Tax, status: statusNPD4 });
+
+            // 2. НПД 6%
+            let npd6Tax = 0; 
+            let statusNPD6 = 'Подходит'; 
+            let displayIncome6 = annualIncome;
+            if (annualIncome <= 2400000) { 
+                npd6Tax = annualIncome * 0.06; 
+            } else {
+                npd6Tax = 2400000 * 0.06; // Налог только с лимита
+                statusNPD6 = 'Превышен лимит 2,4 млн. руб.'; // Новый статус
+                displayIncome6 = 2400000; // Ограничение отображаемого дохода
+            }
+            results.push({ name: 'НПД (6%, юрлица/ИП)', income: displayIncome6, tax: npd6Tax, profit: displayIncome6 - npd6Tax, status: statusNPD6 });
+
+            // 3. НДФЛ
+            const ndflTax = calculateNDFL(annualIncome); 
+            results.push({ name: 'НДФЛ', income: annualIncome, tax: ndflTax, profit: annualIncome - ndflTax, status: 'Подходит' }); 
+
+            // 4. УСН 6%
+            if (annualIncome <= 20000000) { 
+                const usnTax = annualIncome * 0.06; 
+                results.push({ name: 'УСН «Доходы» (6%)', income: annualIncome, tax: usnTax, profit: annualIncome - usnTax, status: 'Подходит' }); 
+            } else {
+                results.push({ name: 'УСН «Доходы»', income: annualIncome, tax: null, profit: -1, status: 'Лимит нарушен (макс. 20 млн руб.)' }); 
+            }
+
+            // 5. АУСН 8%
+            if (annualIncome <= 60000000) { 
+                const ausnTax = annualIncome * 0.08; 
+                results.push({ name: 'АУСН «Доходы» (8%)', income: annualIncome, tax: ausnTax, profit: annualIncome - ausnTax, status: 'Подходит' }); 
+            } else {
+                results.push({ name: 'АУСН «Доходы»', income: annualIncome, tax: null, profit: -1, status: 'Лимит нарушен (макс. 60 млн руб.)' }); 
+            }
+
+            // Поиск лучшего результата
+            const maxProfit = Math.max(...results.map(r => r.profit)); 
+
+            results.forEach(res => {
+                const isBest = res.profit === maxProfit && res.profit > 0; 
+                // Передаем res.income вместо общего annualIncome
+                addRow(tbody, res.name, res.income, res.tax, res.profit, res.status, isBest);
+            });
+        }
+
+        function calculateNDFL(income) {
+            if (income <= 2400000) return income * 0.13; 
+            if (income <= 5000000) return 312000 + (income - 2400000) * 0.15; 
+            if (income <= 20000000) return 702000 + (income - 5000000) * 0.18; 
+            if (income <= 500000000) return 3402000 + (income - 20000000) * 0.20; 
+            return 9402000 + (income - 500000000) * 0.22;
+        }
+
+        function addRow(tbody, system, income, tax, profit, status, isBest) {
+            const row = document.createElement('tr'); 
+            if (isBest) row.classList.add('best-rate'); 
+
+            const taxDisplay = tax === null ? '—' : tax.toFixed(2) + ' руб.'; 
+            const profitDisplay = profit < 0 ? '—' : profit.toFixed(2) + ' руб.'; 
+
+            row.innerHTML = `
+                <td>${system}</td>
+                <td>${income.toFixed(2)} руб.</td>
+                <td>${taxDisplay}</td>
+                <td>${profitDisplay}</td>
+                <td>${status}</td>
+            `; 
+            tbody.appendChild(row); 
+        }
+    </script>
+</body>
+</html>
